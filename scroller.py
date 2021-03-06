@@ -54,10 +54,23 @@ class RepeatingScroller(Scroller):
             self.run()
             times -= 1
 
+    @abstractmethod
+    def get_text(self, begin, end):
+        raise NotImplementedError
+
+    def __next__(self):
+        begin, end = self.get_begin_end(self._index)
+        display_text = self.get_text(begin, end)
+        self.callback(display_text)
+        self._index += 1
+        if self._index > self.max_index - int(not self.include_last):
+            self._index = int(not self.include_first)
+        self._sleep(self.wait)
+
 
 class RightScroller(RepeatingScroller):
 
-    def __next__(self):
+    def get_text(self, begin, end):
         begin, end = self.get_begin_end(self._index)
         if begin < 0 and end < 0:
             display_text = self.filler * -end + self.text + self.filler * -begin
@@ -67,17 +80,12 @@ class RightScroller(RepeatingScroller):
             display_text = self.filler * -end + (self.text if begin == 0 else self.text[:-begin])
         else:
             display_text = (self.text[end:] if begin == 0 else self.text[end:-begin])
-        self.callback(display_text)
-        self._index += 1
-        if self._index > self.max_index - int(not self.include_last):
-            self._index = int(not self.include_first)
-        self._sleep(self.wait)
+        return display_text
 
 
 class LeftScroller(RepeatingScroller):
 
-    def __next__(self):
-        begin, end = self.get_begin_end(self._index)
+    def get_text(self, begin, end):
         if begin < 0 and end < 0:
             display_text = self.filler * -begin + self.text + self.filler * -end
         elif begin < 0:
@@ -86,11 +94,7 @@ class LeftScroller(RepeatingScroller):
             display_text = self.text[begin:] + self.filler * -end
         else:
             display_text = (self.text[begin:] if end == 0 else self.text[begin:-end])
-        self.callback(display_text)
-        self._index += 1
-        if self._index > self.max_index - int(not self.include_last):
-            self._index = int(not self.include_first)
-        self._sleep(self.wait)
+        return display_text
 
 
 def main():
