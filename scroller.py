@@ -37,9 +37,9 @@ class RepeatingScroller(Scroller):
         self.include_last = include_last
         super().__init__(width, text, filler=filler, callback=callback or self.print_line)
         self._index = int(not self.include_first)
-        self.print_newline = lambda display_text, prefix='.', suffix='.': self.print_line(display_text,
-                                                                                          prefix, suffix,
-                                                                                          end='\n')
+        self.print_newline = lambda display_text, prefix='', suffix='': self.print_line(display_text,
+                                                                                        prefix, suffix,
+                                                                                        end='\n')
 
     def print_line(self, display_text, prefix='.', suffix='.', end=''):
         print(f"\r{prefix}{display_text}{suffix}",
@@ -98,9 +98,9 @@ class LeftScroller(RepeatingScroller):
 
 
 def main():
-    r_scroller = LeftScroller(10, "https://github.com/ScottBot10/scroller", .3)
-    r_scroller.callback = lambda display_text: r_scroller.print_line(display_text, prefix='|', suffix='|', end='\n')
-    r_scroller.run()
+    l_scroller = LeftScroller(10, "https://github.com/ScottBot10/scroller", .3)
+    l_scroller.callback = lambda display_text: l_scroller.print_line(display_text, prefix='|', suffix='|', end='\n')
+    l_scroller.run()
 
 
 if __name__ == '__main__':
