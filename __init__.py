@@ -1,1 +1,1 @@
-from .scroller import LeftScroller, RightScroller, RepeatingScroller
+from .scroller import LeftScroller, RightScroller, Scroller
