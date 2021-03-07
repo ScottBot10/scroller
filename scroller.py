@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class Scroller(ABC):
+class ScrollerBase(ABC):
     def __init__(self, width, text, filler=' ', callback=None):
         self.width = width
         self.text = text
@@ -9,7 +9,7 @@ class Scroller(ABC):
 
         self.callback = callback or self.print_line
 
-        self._index = 0
+        self._index = -1
 
     @property
     def max_index(self):
@@ -26,8 +26,12 @@ class Scroller(ABC):
     def __next__(self):
         raise NotImplementedError
 
+    @abstractmethod
+    def __prev__(self):
+        raise NotImplementedError
 
-class RepeatingScroller(Scroller):
+
+class Scroller(ScrollerBase):
 
     def __init__(self, width, text, wait, filler=' ', callback=None, include_first=True, include_last=True):
         self.wait = wait
@@ -36,7 +40,7 @@ class RepeatingScroller(Scroller):
         self.include_first = include_first
         self.include_last = include_last
         super().__init__(width, text, filler=filler, callback=callback or self.print_line)
-        self._index = int(not self.include_first)
+        self._index = int(not self.include_first)-1
         self.print_newline = lambda display_text, prefix='', suffix='': self.print_line(display_text,
                                                                                         prefix, suffix,
                                                                                         end='\n')
@@ -45,8 +49,12 @@ class RepeatingScroller(Scroller):
         print(f"\r{prefix}{display_text}{suffix}",
               end=end if self._index == self.max_index - int(not self.include_last) else '')
 
+    @property
+    def range(self):
+        return int(not self.include_first), self.max_index + int(self.include_last)
+
     def run(self):
-        for _ in range(int(not self.include_first), self.max_index + int(self.include_last)):
+        for _ in range(*self.range):
             self.__next__()
 
     def repeat(self, times=-1):
@@ -58,17 +66,30 @@ class RepeatingScroller(Scroller):
     def get_text(self, begin, end):
         raise NotImplementedError
 
+    def start(self):
+        self._index = int(not self.include_first)-1
+        self.__next__()
+
     def __next__(self):
-        begin, end = self.get_begin_end(self._index)
-        display_text = self.get_text(begin, end)
-        self.callback(display_text)
         self._index += 1
         if self._index > self.max_index - int(not self.include_last):
             self._index = int(not self.include_first)
+        begin, end = self.get_begin_end(self._index)
+        display_text = self.get_text(begin, end)
+        self.callback(display_text)
+        self._sleep(self.wait)
+
+    def __prev__(self):
+        self._index -= 1
+        if self._index < int(not self.include_first):
+            self._index = self.max_index - int(not self.include_last)
+        begin, end = self.get_begin_end(self._index)
+        display_text = self.get_text(begin, end)
+        self.callback(display_text)
         self._sleep(self.wait)
 
 
-class RightScroller(RepeatingScroller):
+class RightScroller(Scroller):
 
     def get_text(self, begin, end):
         begin, end = self.get_begin_end(self._index)
@@ -83,7 +104,7 @@ class RightScroller(RepeatingScroller):
         return display_text
 
 
-class LeftScroller(RepeatingScroller):
+class LeftScroller(Scroller):
 
     def get_text(self, begin, end):
         if begin < 0 and end < 0:
@@ -98,8 +119,8 @@ class LeftScroller(RepeatingScroller):
 
 
 def main():
-    l_scroller = LeftScroller(10, "https://github.com/ScottBot10/scroller", .3)
-    l_scroller.callback = lambda display_text: l_scroller.print_line(display_text, prefix='|', suffix='|', end='\n')
+    l_scroller = LeftScroller(10, "https://github.com/ScottBot10/scroller", .3, include_first=True, include_last=False)
+    l_scroller.callback = lambda display_text: print(f".{display_text}.") # l_scroller.print_line(display_text, prefix='|', suffix='|', end='\n')
     l_scroller.run()
 
 
